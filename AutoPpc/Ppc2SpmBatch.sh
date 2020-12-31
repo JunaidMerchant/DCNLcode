@@ -26,4 +26,10 @@
 #$ -S /bin/bash
 #$ -V
 #
-matlab -nodesktop -nodisplay -r "cd('/media/jm3080/Naider/RDOC/code/AutoPpc'); spm_jobman('initcfg'); SubID= $1 ; MakePpcBatch2(SubID); exit"
+echo ---------------------------------------------------------
+echo Ppc pt2 $SubID $6
+date 
+matlab -nosplash -nodisplay -nodesktop -softwareopengl -r "SpmDir= '$1' ; SubID= '$2' ;  SubP= '$3' ; CodeDir= '$4' ; PpcBatchDir = '$5' ; Func = '$6' ; Struct = '$7' ; MakePpcBatch2(SpmDir, SubID, SubP, CodeDir, PpcBatchDir, Func, Struct); quit"
+echo Ppc pt2 $SubID $6 DONE!
+date 
+echo ---------------------------------------------------------

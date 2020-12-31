@@ -1,21 +1,27 @@
-function MakePpcBatch2(SubID)
-% This script creates and runs the entire preprocessing for a single
+function MakePpcBatch2_working(SpmDir, SubID, SubP, CodeDir, PpcBatchDir, Func, Struct)
+% TODO: ADD ERROR MESSAGES WITH REQUIREDINPUT PARAMETERS, WRAP TRY/CATCH
+% AROUND THIS, AND COMMENT PARTS THAT NEED TO BE CHANGED TO MATCH STUDY
+% SPECIFIC PARAMETERS.
+
+% This script creates and runs the second part ofpreprocessing for a single
 % subject.
 %
 %% Set up all the variables based on the input of subject ID.
+
+addpath(SpmDir);
+addpath(CodeDir);
 spm_jobman('initcfg');
-SubP=fullfile('/media/jm3080/Naider/RDOC/ppc/',SubID);
-yRage=findfiles(SubP,'y*MPRAGE.nii');
-bRage=findfiles(SubP,'b*MPRAGE.nii');
-Funcs={'NBack' 'Resting' 'SocStroop' 'StopSignal'};
-%Funcs={'NBack' 'Resting'};
-CodeDir='/media/jm3080/Naider/RDOC/code/PpcBatches';
-%
-for f = 1:length(Funcs)
-    CurFDirs=dir(fullfile(SubP,strcat(Funcs{1,f},'*')));
+try
+    yRage=findfiles(SubP,strcat('y_',SubID,'_',Struct,'.nii'));
+    bRage=findfiles(SubP,strcat('b_',Struct,'.nii'));
+    
+    
+    %
+    
+    CurFDirs=dir(fullfile(SubP,strcat(Func,'*')));
     if length(CurFDirs)>0
-        Files=findfiles(fullfile(SubP),strcat('b_ua',SubID,'_',Funcs{1,f},'*.nii'));
-        Mean=findfiles(fullfile(SubP),strcat('b_meanua',SubID,'_',Funcs{1,f},'*.nii'));
+        Files=findfiles(fullfile(SubP),strcat('b_ua',SubID,'_',Func,'*.nii'));
+        Mean=findfiles(fullfile(SubP),strcat('b_meanua',SubID,'_',Func,'*.nii'));
         %
         %
         matlabbatch{1}.spm.spatial.coreg.estimate.ref = bRage;
@@ -39,7 +45,7 @@ for f = 1:length(Funcs)
         matlabbatch{3}.spm.spatial.smooth.dtype = 0;
         matlabbatch{3}.spm.spatial.smooth.im = 0;
         matlabbatch{3}.spm.spatial.smooth.prefix = 's';
-        save(fullfile(CodeDir,strcat(SubID,'_Func2Ppc_',Funcs{1,f},'.mat')),'matlabbatch');
+        save(fullfile(PpcBatchDir,strcat(SubID,'_Func2Ppc_',Func,'.mat')),'matlabbatch');
         spm_jobman('run',matlabbatch);
         clear matlabbatch
     end

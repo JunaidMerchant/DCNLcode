@@ -1,12 +1,6 @@
 #!/bin/bash
 ############################################################################
-#		Full PreProcessing for 1 subject
-# Takes subject ID converts, organizes, & starts preprocessing all the data.
-# Can be used as a bash script or qsub for the grid!
-# Paths & variables that need changing are marked with "!CHANGE THIS!", 
-# and include -o, CodeDir, VertDir, DcmDir, PpcDir, Fmap, Struct, & Func. 
-# example usage: 
-# > qsub /path/to/FullPps1.sh
+#		First level models for 1 subject/task
 #
 # -junaid.salim.merchant 2017.02.07
 ############################################################################
@@ -25,5 +19,15 @@
 # Use bash
 #$ -S /bin/bash
 #$ -V
+# Required inputs: SpmDir, SubID, SubP, CodeDir, FxBatchDir, BxDir, FxDir, MotionDir, Contrasts, Func
+echo ---------------------------------------------------------
+echo First-level model $2 $9
+date 
 #
-matlab -nodesktop -nodisplay -r "cd('/media/jm3080/Naider/RDOC/code/AutoPpc'); SubID= $1 ; MakeFxBatch2(SubID); quit"
+#
+# Start matlab, and use SPM to coregister and segment 
+matlab -nosplash -nodisplay -nodesktop -softwareopengl -r "SpmDir= '$1' ; SubID= '$2' ;  SubP= '$3' ; CodeDir= '$4' ; FxBatchDir= '$5' ; BxDir= '$6' ; FxDir= '$7' ; MotionDir= '$8' ; Func= '$9' ; MakeFxBatch(SpmDir, SubID, SubP, CodeDir, FxBatchDir, BxDir, FxDir, MotionDir, Func); exit"
+#
+echo First-level model $2 $9 DONE!
+date 
+echo ---------------------------------------------------------

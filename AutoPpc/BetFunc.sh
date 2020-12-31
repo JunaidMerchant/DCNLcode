@@ -1,12 +1,7 @@
 #!/bin/bash
 ############################################################################
-#		Full PreProcessing for 1 subject
-# Takes subject ID converts, organizes, & starts preprocessing all the data.
-# Can be used as a bash script or qsub for the grid!
-# Paths & variables that need changing are marked with "!CHANGE THIS!", 
-# and include -o, CodeDir, VertDir, DcmDir, PpcDir, Fmap, Struct, & Func. 
-# example usage: 
-# > qsub /path/to/FullPps1.sh
+#		bet functionals for 1 subject
+#
 #
 # -junaid.salim.merchant 2017.02.07
 ############################################################################

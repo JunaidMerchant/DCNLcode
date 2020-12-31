@@ -20,7 +20,7 @@ export SubID=$SubID
 export StudyName="RDOC"
 
 ## Export latest update
-export LatestUpdate="July 26 2018"
+export LatestUpdate="August 13 2018"
 
 ## Export last person to update
 export LastUpdater="Junaid -- merchantjs@gmail.com"
@@ -29,7 +29,7 @@ export LastUpdater="Junaid -- merchantjs@gmail.com"
 export Author="junaid.salim.merchant | merchantjs@gmail.com"
 
 ## Export path to the code directory where this & associated scripts reside.
-export CodeDir="/media/jm3080/Naider/RDOC/code/AutoPpc_working"
+export CodeDir="/media/jm3080/Naider/RDOC/code/AutoPpc"
 
 ## Image
 export BrainMe=$CodeDir/BrainMe2.jpg
@@ -58,8 +58,17 @@ export PpcDir="/media/jm3080/Naider/RDOC/ppc/"
 # Export path to zipped download directory.
 export ZipDir="/media/jm3080/Naider/RDOC/zippedownloads/"
 
+# Export path to motion directory.
+export MotionDir="/media/jm3080/Naider/RDOC/motion/"
+
+# Export path to behavioral directory.
+export BxDir="/media/jm3080/Naider/RDOC/bx/"
+
+# Export path to first level modelsdirectory.
+export FxDir="/media/jm3080/Naider/RDOC/fx/"
+
 # Export path to R script to calculate SSRT.
-export SSRT="/media/jm3080/Naider/RDOC/bx/Stop/analyse_stop.R"
+export SSRT="/media/jm3080/Naider/RDOC/bx/StopSignal/analyse_stop.R"
 
 # Export path to fieldmap parameters file for calculating VDMs
 # MUST BE ADJUSTED TO MATCHING SCANNING PARAMETERS. CONSULT THIS: 
@@ -86,6 +95,9 @@ export MNI="/media/jm3080/Naider/RDOC/code/MNI152_T1_1mm_brain.nii"
 
 # Export path to directory where PPC batches are saved
 export PpcBatchDir="/media/jm3080/Naider/RDOC/code/PpcBatches"
+
+# Export path to directory where Fx batches are saved
+export FxBatchDir="/media/jm3080/Naider/RDOC/code/FxBatches"
 
 #####################################################################
 ## Export PATHS TO SUBJECT SPECIFIC DIRECTORIES: DO NOT CHANGE THESE!
@@ -162,6 +174,18 @@ export ClnVrt=${CodeDir}/CleanVert.sh
 # Export path to Zip/Bet/Gunzip functionals script
 export ZipBetGun=${CodeDir}/ZipBetGun.sh
 
+# Export path to motion bash wrapper file
+export Motion=${CodeDir}/Motion.sh
+
+# Export path to behavioral summary bash wrapper file
+export Bx=${CodeDir}/Bx.sh
+
+# Export path to Calc_FD file
+export FD=${CodeDir}/Calc_FD.m
+
+# Export path to motion summary file
+export MotSum=${CodeDir}/MotionSummary.m
+
 # Export path to Normalize file
 export Norm=${CodeDir}/NormFunc2Mni.m
 
@@ -176,3 +200,6 @@ export Bet=${CodeDir}/BetFunc.sh
 
 # Export path to Fx func file
 export Fx=${CodeDir}/Fx1SpmBatch.sh
+
+# Export path to contrasts for first level model file
+export Contrasts=${CodeDir}/Contrasts.m

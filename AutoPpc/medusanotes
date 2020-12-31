@@ -1,0 +1,48 @@
+----------------------- /share/apps/modules/modulefiles ------------------------
+afni                    gaussian/16.a03_legacy  mrtrix3
+anaconda2               gcc/5.5.0               nwchem/6.5
+anaconda3               glibc/2.14              nwchem/6.8
+apbs/1.4.1              gromacs/5.0.6           nwchem-bigmem/6.5
+blast/2.2.31+           gromacs-amd/5.0.6       nwchem-bigmem/6.8
+blast/2.5.0+            intel/2015u3            nwchem-devel/6.5
+bowtie/1.0.1            intel/2018u1            nwchem-devel/6.8
+bowtie/1.1.2            intel-mpi/2015u3        open-mpi/1.8.8-gnu
+bowtie2/2.2.3           intel-mpi/2018u1        open-mpi/1.8.8-intel
+bowtie2/2.2.6           lammps/2015.05.15       open-mpi/3.0.0-gnu
+caret/5.65              lammps/2017.08.17       open-mpi/3.0.0-intel
+cd-hit/4.6.5            lammps/2018.03.08       palm/alpha102
+cdo/1.7.0               mathematica/10.2.0      perl/5.14.2
+clustalo/1.2.3          mathematica/10.4.0      python/2.7.10
+cufflinks/2.2.1         mathematica/11.0.0      python/2.7.9
+dcm2niix/2017.05.28     mathematica/11.1.0      python/3.3.6
+dynare/4.4.3-R2016b     matlab/R2012b           python/3.4.3
+espresso/5.0.3          matlab/R2013b           R/3.2.1
+espresso/5.2.0          matlab/R2014a           R/3.2.3
+espresso/6.2.1          matlab/R2014b           samtools/0.1.19
+freesurfer/5.3.0        matlab/R2015a           stata/14
+freesurfer/6.0.0        matlab/R2015b           stata/15
+fsl/5.0.08              matlab/R2016a           tophat/2.1.0
+fsl/5.0.09              matlab/R2016b           trinity/2.0.6
+fsl/5.0.10              matlab/R2017a           trinity/2.2.0
+gamess/2014.12.05       matlab/R2017b           velvet/1.2.10
+gatk/4.0.2.1            matlab/R2018a           workbench/1.1.1
+gaussian/09.d01         megahit/1.1.1           workbench/1.2.0
+gaussian/16.a03_base.q  mothur/1.36.1
+gaussian/16.a03_devel.q mriconvert/2.1.0
+
+ssh xy34@medusa.georgetown.edu
+cd Dir
+for s in $(ls -d DCNL*); do
+qsub Ppc1Sub.sh..
+done
+
+# need to modify each of the function that needs to module load such as
+module load matlab/R2018a
+module load mriconvert/2.1.0
+module load fsl/5.0.10
+module load R/3.2.3
+module load dcm2niix/2017.05.28 
+
+matlab -nosplash -nodisplay -nodesktop -r "clear; addpath('/spmpath'); addpath('/rdocpath'); spm_jobman('initcfg'); CurSub= '$1'; SubP= '$SubP'; Func= '$Scan'; run('$FncPpc3'); spm_jobman('run',matlabbatch); exit"
+
+

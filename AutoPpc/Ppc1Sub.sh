@@ -21,14 +21,14 @@
 # Name of job/error log
 #$ -N FullPpc
 # Directory where job/error logs are written. !CHANGE THIS!
-#$ -o /home/research/sanlab/Studies/CHIVES/subjects/logs
+#$ -o /home/
 # Use bash
 #$ -S /bin/bash
 #$ -V
 #
-####  !!!   ATTENTION   !!!    #######################
-# THIS IS THE ONLY THING THAT NEEDS TO BE CHANGED IN THIS FILE
-source /media/jm3080/Naider/RDOC/code/AutoPpc_working/Parameters.sh
+#
+# For testing purposes, you could source this directly below:
+# source /media/jm3080/Naider/RDOC/code/AutoPpc_working/Parameters.sh
 #
 # THE ABOVE COULD BE CHANGED TO BE MORE ELEGANT SO THAT YOU ONLY MODIFY THE PARAMETERS FILE
 #
@@ -37,17 +37,18 @@ source /media/jm3080/Naider/RDOC/code/AutoPpc_working/Parameters.sh
 me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 #
 # Define Subject ID from input 1
-if [ $# -eq 0 ]; then
-	echo "This is script is the automated data processing pipeline for the $StudyName study, and requires one input parameter, which is the Subject ID."
+if [ $# -lt 2 ]; then
+	echo "This is script is the automated data processing pipeline for the $StudyName study, and requires two input parameters, which are the Subject ID, and the parameters file."
 	echo ""
-	echo "USAGE: ./$me <SubjectID>"
+	echo "USAGE: ./$me <SubjectID> <Parameters>"
 	echo ""
 	echo "Author: $Author"
 	echo "Last updated on $LatestUpdate by $LastUpdater"
 	exit;
 else
 	SubID=$1
-	source $CodeDir/Parameters.sh
+	Parameters=$2
+	source $Parameters
 	echo --------------------------------------
 	if [ `which figlet | wc -l` -eq 1 ]; then
 		figlet AutoPpc
@@ -60,7 +61,6 @@ else
 	if [ `which eog | wc -l` -eq 1 ]; then
 		eog $BrainMe &
 	fi
-	exit;
 fi
 #
 # Look for FSL and exit if not in path
@@ -95,7 +95,10 @@ if [ ! -d $SubD ]; then # This can be changed out using new techniques learned i
 	echo Unzipping $SubID
 	date
 	echo --------------------------------------
-	unzip -q $SubZ -d $SubD
+	for s in ${SubZ[@]}; do
+		unzip -q "$s" -d $SubD
+	done
+	unset s
 fi
 
 # Convert all the files into the converted folder
@@ -152,12 +155,12 @@ cd $SubC
 #
 # Clean up and Organize:
 #
-# Organize/copy structural files inot subject's ppc folder
+# Organize/copy structural files into subject's ppc folder, and bet the MPRAGE
 if [ ! -d $SubP/struct ]; then 
 	echo - structurals
 	mkdir $SubP/struct
 	for s in ${Struct[@]}; do
-		if [ -d *$s* ]; then
+		if [ $(ls -d *"$s"* | wc -l) -gt 0 ]; then
 			$OrgS $SubID $SubP $s
 		fi
 	done
@@ -176,7 +179,7 @@ for y in ${Func[@]}; do
 done
 unset y
 #
-# Start loop to consolidate phase and mag images of a fmap into the same folder
+# Start loop to consolidate phase and magnitude images of a fmap into the same folder
 # First, list all folders into array
 Folders=($(ls))
 # Get number indices of each folder, consolidate into one, and delete the other.
@@ -202,7 +205,7 @@ for f in ${Func[@]}; do
 			$OrgF $SubID ${FuncFolders[$((${x}-1))]} ${SubP}/${f}${x} $Fmap
 		done
 		unset x
-	else
+	elif [ ${#FuncFolders[@]} -eq 1 ]; then
 		mkdir ${SubP}/${f}
 		$OrgF $SubID ${FuncFolders} ${SubP}/${f} $Fmap
 	fi
@@ -213,33 +216,47 @@ echo --------------------------------------
 #
 #
 # Gzip/compress the files in the converted folder
-echo --------------------------------------
-echo Zipping .nii files
-date
-find $SubC -name *.nii | xargs gzip
-echo --------------------------------------
+#### COMMENTED THIS OUT FOR NOW, BUT I RECOMMEND PERIODICALLY ZIPPING
+# NIFTI FILES TO SAVE DISK SPACE ####
+# echo --------------------------------------
+# echo Zipping .nii files
+# date
+# find $SubC -name *.nii | xargs gzip
+# echo --------------------------------------
 #
 #
 # Change back into the code directory
 cd $CodeDir
 #
 #
-# Start preprocessing structural data
+# Preprocess structural data. Coregister to template and segmentation/Normalization. Uses only MPRAGE and betted MPRAGE data
 $StrctPpc1 $SpmDir $SubID $SubP $MNI $CodeDir $PpcBatchDir $Struct
 #
-# Start preprocessing functional data
-# THE THING THAT IS HARDCODED IN HERE IS THE SLICE TIME PARAMETERS. I DON'T KNOW HOW TO READ THOSE IN EASILY
+# Loop through the functional scan list and do the following:
+# 1) preprocess part1: slice-time correction, calcluate voxel displacement map (if fieldmap exist), and realign and unwarp
+# 2) process behavioral data
+# 3) get summary, and update motion summary sheets
+# 4) skull strip realign/unwarped and mean data
+# 5) preprocess part 2: coregister to structural data, normalize using structural normalization parameters, and smooth to 6mm FWHM
+# 6) create first level models for the task fMRI data
+#
+# NOTE: FOR EACH OF THESE STEPS, YOU MUST MODIFY THE CODE TO SUIT THE PARAMETERS OF YOUR STUDY, INCLUDING (BUT NOT LIMITED TO): 
+# slice-timing parameters, fieldmap parameters, behavioral data processing scripts, and first-level model/contrast files
+#
 for f in ${Func[@]}; do
 	if [ $(ls -d $SubP/$f* 2>/dev/null | wc -l) -gt 0 ]; then
 		$Ppc1 $SpmDir $SubID $SubP $CodeDir $PpcBatchDir $f $Fmap $FmapPm
+		$Motion $SubP $f $MotionDir
 		$Bet $SubP $f
 		$Ppc2 $SpmDir $SubID $SubP $CodeDir $PpcBatchDir $f $Struct
+		if [[ $f != "Resting" ]]; then
+			$Bx $SubID $CodeDir $BxDir $f
+			$Fx $SpmDir $SubID $SubP $CodeDir $FxBatchDir $BxDir $FxDir $MotionDir $f
+		fi
 	fi
 done
 #
-#
-# Start Fx
-$Fx "'${SubID}'"
-#
-# Run script to calculate SSRT
-R < $SSRT --no-save
+# Run script to calculate SSRT for every subjects as summary results.csv and SSRT.csv
+R < $SSRT --no-save > rlog.txt
+
+# run fMRIprep

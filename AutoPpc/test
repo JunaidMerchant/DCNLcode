@@ -1,3 +1,0 @@
-SubID=DCNL-RDOC-080
-source /media/jm3080/Naider/RDOC/code/AutoPpc/Parameters.sh
-./TestFun.sh "'${SubID}'" "'${SubP}'" "'${PpcBatchDir}'" "'${MNI}'" "'${Func[@]}'" 

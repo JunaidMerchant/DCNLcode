@@ -1,0 +1,788 @@
+
+R version 3.4.4 (2018-03-15) -- "Someone to Lean On"
+Copyright (C) 2018 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list=ls()) # clear the working directory
+> setwd('/media/jm3080/Naider/RDOC/bx/StopSignal')
+> library(plyr) # will use this for the arrange function
+> library (reshape) # load library
+> #library (ez) # load library
+> library (Hmisc) # required for %nin%
+> library (ggplot2)
+> library (doBy)
+> library(zoo) #required for na.locf
+> 
+> 
+> # --- STEP: open the data files ---
+> input <- data.frame()
+> #oldWD <- setwd("data") #file names are relative in the for loop
+> test1 <- dir(pattern = "*.txt")
+> test2 <- dir(pattern = "*.mat")
+> files <- setdiff(test1,test2)
+> remove(test1,test2)
+> #files <- dir(pattern = "*.txt") #files
+> for (i in files) {
++ 	tmp <- read.table (i, header = T) #read the file
++ 	
++   #extract subject number
++   labels <-  unlist(strsplit(files[match(i, files)], "-")) 
++   subject_label <- unlist(strsplit(labels[3], "\\."))[1]
++   tmp$subject <- i
++   
++   #add the content to the data frame
++   input <- rbind (input, tmp)
++ 	rm(tmp)
++ }
+> 
+> #setwd(oldWD) # go back to analysis working directory
+> 
+> 
+> # --- STEP:  exclude practice block ---
+> input <- subset (input, block > 0)
+> 
+> # --- STEP: make factors of a couple of variables that may be used later on ---
+> input$signal <- factor(input$signal, levels = 0:1, labels = c('nosignal', 'signal'))
+> 
+> # --- STEP: create some new variables ---
+> # create new variable for calculation of p(correct)
+> input$acc <- ifelse(input$correct == 4, 1, 0)
+> input$miss <- ifelse(input$resp1 == 0, 1, 0) 
+> input$presp <- ifelse(input$resp1 > 0, 1, 0) 
+> 
+> table(input$acc, input$correct)
+   
+       1    2    3    4
+  0  299  135  889    0
+  1    0    0    0 5130
+> table(input$resp1, input$presp)
+   
+       0    1
+  0 1292    0
+  1    0 2598
+  2    0 2560
+  9    0    3
+> table(input$resp1, input$miss)
+   
+       0    1
+  0    0 1292
+  1 2598    0
+  2 2560    0
+  9    3    0
+> 
+> # --- STEP:  do some basic design checks & basic performance ---
+> # check design
+> table(input$subject, input$signal)
+                        
+                         nosignal signal
+  stop-RDOC-001.txt            72     24
+  stop-RDOC-002.txt            72     24
+  stop-RDOC-003-RUN2.txt       76     26
+  stop-RDOC-003.txt            72     24
+  stop-RDOC-004.txt            72     24
+  stop-RDOC-005.txt            72     24
+  stop-RDOC-006.txt            72     24
+  stop-RDOC-008.txt            72     24
+  stop-RDOC-009.txt            72     24
+  stop-RDOC-010.txt            72     24
+  stop-RDOC-011.txt            72     24
+  stop-RDOC-013.txt            72     24
+  stop-RDOC-014.txt            72     24
+  stop-RDOC-015.txt            72     24
+  stop-RDOC-017.txt            72     24
+  stop-RDOC-018.txt            72     24
+  stop-RDOC-019.txt            72     24
+  stop-RDOC-020.txt            72     24
+  stop-RDOC-021.txt            72     24
+  stop-RDOC-022.txt            72     24
+  stop-RDOC-023.txt            72     24
+  stop-RDOC-024.txt            72     24
+  stop-RDOC-025.txt            72     24
+  stop-RDOC-026.txt            85     26
+  stop-RDOC-027.txt            72     24
+  stop-RDOC-028.txt            72     24
+  stop-RDOC-029.txt            72     24
+  stop-RDOC-031.txt            72     24
+  stop-RDOC-032.txt            72     24
+  stop-RDOC-034.txt            72     24
+  stop-RDOC-035.txt            72     24
+  stop-RDOC-036.txt            72     24
+  stop-RDOC-038.txt            72     24
+  stop-RDOC-040.txt            72     24
+  stop-RDOC-042.txt            72     24
+  stop-RDOC-044.txt            72     24
+  stop-RDOC-045.txt            72     24
+  stop-RDOC-046.txt            72     24
+  stop-RDOC-047.txt            72     24
+  stop-RDOC-049.txt            72     24
+  stop-RDOC-052.txt            72     24
+  stop-RDOC-054.txt            72     24
+  stop-RDOC-055.txt            72     24
+  stop-RDOC-057.txt            72     24
+  stop-RDOC-059.txt            72     24
+  stop-RDOC-060.txt            72     24
+  stop-RDOC-061.txt            72     24
+  stop-RDOC-062.txt            72     24
+  stop-RDOC-063.txt            72     24
+  stop-RDOC-064.txt            72     24
+  stop-RDOC-065.txt            72     24
+  stop-RDOC-067.txt            72     24
+  stop-RDOC-069.txt            72     24
+  stop-RDOC-070.txt            72     24
+  stop-RDOC-072.txt            72     24
+  stop-RDOC-073.txt            72     24
+  stop-RDOC-074.txt            72     24
+  stop-RDOC-075.txt            72     24
+  stop-RDOC-076.txt            72     24
+  stop-RDOC-077.txt            72     24
+  stop-RDOC-078.txt            72     24
+  stop-RDOC-079.txt            72     24
+  stop-RDOC-080.txt            72     24
+  stop-RDOC-081.txt            72     24
+  stop-RDOC-084.txt            72     24
+  stop-RDOC-085.txt            72     24
+  stop-RDOC066.txt             72     24
+> table(input$subject, input$stim)
+                        
+                          1  2
+  stop-RDOC-001.txt      48 48
+  stop-RDOC-002.txt      48 48
+  stop-RDOC-003-RUN2.txt 53 49
+  stop-RDOC-003.txt      48 48
+  stop-RDOC-004.txt      48 48
+  stop-RDOC-005.txt      48 48
+  stop-RDOC-006.txt      48 48
+  stop-RDOC-008.txt      48 48
+  stop-RDOC-009.txt      48 48
+  stop-RDOC-010.txt      48 48
+  stop-RDOC-011.txt      48 48
+  stop-RDOC-013.txt      48 48
+  stop-RDOC-014.txt      48 48
+  stop-RDOC-015.txt      48 48
+  stop-RDOC-017.txt      48 48
+  stop-RDOC-018.txt      48 48
+  stop-RDOC-019.txt      48 48
+  stop-RDOC-020.txt      48 48
+  stop-RDOC-021.txt      48 48
+  stop-RDOC-022.txt      48 48
+  stop-RDOC-023.txt      48 48
+  stop-RDOC-024.txt      48 48
+  stop-RDOC-025.txt      48 48
+  stop-RDOC-026.txt      59 52
+  stop-RDOC-027.txt      48 48
+  stop-RDOC-028.txt      48 48
+  stop-RDOC-029.txt      48 48
+  stop-RDOC-031.txt      48 48
+  stop-RDOC-032.txt      48 48
+  stop-RDOC-034.txt      48 48
+  stop-RDOC-035.txt      48 48
+  stop-RDOC-036.txt      48 48
+  stop-RDOC-038.txt      48 48
+  stop-RDOC-040.txt      48 48
+  stop-RDOC-042.txt      48 48
+  stop-RDOC-044.txt      48 48
+  stop-RDOC-045.txt      48 48
+  stop-RDOC-046.txt      48 48
+  stop-RDOC-047.txt      48 48
+  stop-RDOC-049.txt      48 48
+  stop-RDOC-052.txt      48 48
+  stop-RDOC-054.txt      48 48
+  stop-RDOC-055.txt      48 48
+  stop-RDOC-057.txt      48 48
+  stop-RDOC-059.txt      48 48
+  stop-RDOC-060.txt      48 48
+  stop-RDOC-061.txt      48 48
+  stop-RDOC-062.txt      48 48
+  stop-RDOC-063.txt      48 48
+  stop-RDOC-064.txt      48 48
+  stop-RDOC-065.txt      48 48
+  stop-RDOC-067.txt      48 48
+  stop-RDOC-069.txt      48 48
+  stop-RDOC-070.txt      48 48
+  stop-RDOC-072.txt      48 48
+  stop-RDOC-073.txt      48 48
+  stop-RDOC-074.txt      48 48
+  stop-RDOC-075.txt      48 48
+  stop-RDOC-076.txt      48 48
+  stop-RDOC-077.txt      48 48
+  stop-RDOC-078.txt      48 48
+  stop-RDOC-079.txt      48 48
+  stop-RDOC-080.txt      48 48
+  stop-RDOC-081.txt      48 48
+  stop-RDOC-084.txt      48 48
+  stop-RDOC-085.txt      48 48
+  stop-RDOC066.txt       48 48
+> 
+> # check overall performance of all subjects on no-signal trials
+> tmp <- subset(input, signal == 'nosignal') 
+> prop.table(table(tmp$subject, tmp$acc), 1)
+                        
+                                  0          1
+  stop-RDOC-001.txt      0.04166667 0.95833333
+  stop-RDOC-002.txt      0.22222222 0.77777778
+  stop-RDOC-003-RUN2.txt 0.30263158 0.69736842
+  stop-RDOC-003.txt      0.15277778 0.84722222
+  stop-RDOC-004.txt      0.12500000 0.87500000
+  stop-RDOC-005.txt      0.08333333 0.91666667
+  stop-RDOC-006.txt      0.13888889 0.86111111
+  stop-RDOC-008.txt      0.05555556 0.94444444
+  stop-RDOC-009.txt      0.13888889 0.86111111
+  stop-RDOC-010.txt      0.01388889 0.98611111
+  stop-RDOC-011.txt      0.09722222 0.90277778
+  stop-RDOC-013.txt      0.05555556 0.94444444
+  stop-RDOC-014.txt      0.04166667 0.95833333
+  stop-RDOC-015.txt      0.06944444 0.93055556
+  stop-RDOC-017.txt      0.12500000 0.87500000
+  stop-RDOC-018.txt      0.47222222 0.52777778
+  stop-RDOC-019.txt      0.05555556 0.94444444
+  stop-RDOC-020.txt      0.12500000 0.87500000
+  stop-RDOC-021.txt      0.25000000 0.75000000
+  stop-RDOC-022.txt      0.09722222 0.90277778
+  stop-RDOC-023.txt      0.20833333 0.79166667
+  stop-RDOC-024.txt      0.02777778 0.97222222
+  stop-RDOC-025.txt      0.43055556 0.56944444
+  stop-RDOC-026.txt      0.28235294 0.71764706
+  stop-RDOC-027.txt      0.19444444 0.80555556
+  stop-RDOC-028.txt      0.04166667 0.95833333
+  stop-RDOC-029.txt      1.00000000 0.00000000
+  stop-RDOC-031.txt      0.15277778 0.84722222
+  stop-RDOC-032.txt      0.38888889 0.61111111
+  stop-RDOC-034.txt      0.04166667 0.95833333
+  stop-RDOC-035.txt      0.08333333 0.91666667
+  stop-RDOC-036.txt      0.23611111 0.76388889
+  stop-RDOC-038.txt      0.12500000 0.87500000
+  stop-RDOC-040.txt      0.44444444 0.55555556
+  stop-RDOC-042.txt      0.00000000 1.00000000
+  stop-RDOC-044.txt      0.19444444 0.80555556
+  stop-RDOC-045.txt      0.05555556 0.94444444
+  stop-RDOC-046.txt      0.04166667 0.95833333
+  stop-RDOC-047.txt      0.01388889 0.98611111
+  stop-RDOC-049.txt      0.08333333 0.91666667
+  stop-RDOC-052.txt      0.08333333 0.91666667
+  stop-RDOC-054.txt      0.02777778 0.97222222
+  stop-RDOC-055.txt      0.20833333 0.79166667
+  stop-RDOC-057.txt      0.00000000 1.00000000
+  stop-RDOC-059.txt      0.20833333 0.79166667
+  stop-RDOC-060.txt      0.02777778 0.97222222
+  stop-RDOC-061.txt      0.05555556 0.94444444
+  stop-RDOC-062.txt      0.09722222 0.90277778
+  stop-RDOC-063.txt      0.15277778 0.84722222
+  stop-RDOC-064.txt      0.06944444 0.93055556
+  stop-RDOC-065.txt      0.09722222 0.90277778
+  stop-RDOC-067.txt      0.23611111 0.76388889
+  stop-RDOC-069.txt      0.05555556 0.94444444
+  stop-RDOC-070.txt      0.62500000 0.37500000
+  stop-RDOC-072.txt      0.02777778 0.97222222
+  stop-RDOC-073.txt      0.05555556 0.94444444
+  stop-RDOC-074.txt      0.11111111 0.88888889
+  stop-RDOC-075.txt      0.02777778 0.97222222
+  stop-RDOC-076.txt      0.15277778 0.84722222
+  stop-RDOC-077.txt      0.00000000 1.00000000
+  stop-RDOC-078.txt      0.04166667 0.95833333
+  stop-RDOC-079.txt      0.02777778 0.97222222
+  stop-RDOC-080.txt      0.26388889 0.73611111
+  stop-RDOC-081.txt      0.04166667 0.95833333
+  stop-RDOC-084.txt      0.02777778 0.97222222
+  stop-RDOC-085.txt      0.22222222 0.77777778
+  stop-RDOC066.txt       0.05555556 0.94444444
+> 
+> # check overall performance of all subjects on signal trials
+> tmp <- subset(input, signal == 'signal') 
+> prop.table(table(tmp$subject, tmp$acc), 1)
+                        
+                                 0         1
+  stop-RDOC-001.txt      0.2083333 0.7916667
+  stop-RDOC-002.txt      0.2916667 0.7083333
+  stop-RDOC-003-RUN2.txt 0.4230769 0.5769231
+  stop-RDOC-003.txt      0.3333333 0.6666667
+  stop-RDOC-004.txt      0.5000000 0.5000000
+  stop-RDOC-005.txt      0.4583333 0.5416667
+  stop-RDOC-006.txt      0.3750000 0.6250000
+  stop-RDOC-008.txt      0.4583333 0.5416667
+  stop-RDOC-009.txt      0.5416667 0.4583333
+  stop-RDOC-010.txt      0.4166667 0.5833333
+  stop-RDOC-011.txt      0.2916667 0.7083333
+  stop-RDOC-013.txt      0.5000000 0.5000000
+  stop-RDOC-014.txt      0.2916667 0.7083333
+  stop-RDOC-015.txt      0.4583333 0.5416667
+  stop-RDOC-017.txt      0.2916667 0.7083333
+  stop-RDOC-018.txt      0.6250000 0.3750000
+  stop-RDOC-019.txt      0.3333333 0.6666667
+  stop-RDOC-020.txt      0.4166667 0.5833333
+  stop-RDOC-021.txt      0.4166667 0.5833333
+  stop-RDOC-022.txt      0.4166667 0.5833333
+  stop-RDOC-023.txt      0.2916667 0.7083333
+  stop-RDOC-024.txt      0.3333333 0.6666667
+  stop-RDOC-025.txt      0.2083333 0.7916667
+  stop-RDOC-026.txt      0.3076923 0.6923077
+  stop-RDOC-027.txt      0.5000000 0.5000000
+  stop-RDOC-028.txt      0.4166667 0.5833333
+  stop-RDOC-029.txt      0.4583333 0.5416667
+  stop-RDOC-031.txt      0.3333333 0.6666667
+  stop-RDOC-032.txt      0.2916667 0.7083333
+  stop-RDOC-034.txt      0.3333333 0.6666667
+  stop-RDOC-035.txt      0.3750000 0.6250000
+  stop-RDOC-036.txt      0.4166667 0.5833333
+  stop-RDOC-038.txt      0.5000000 0.5000000
+  stop-RDOC-040.txt      0.5000000 0.5000000
+  stop-RDOC-042.txt      0.2916667 0.7083333
+  stop-RDOC-044.txt      0.2500000 0.7500000
+  stop-RDOC-045.txt      0.2916667 0.7083333
+  stop-RDOC-046.txt      0.4583333 0.5416667
+  stop-RDOC-047.txt      0.5000000 0.5000000
+  stop-RDOC-049.txt      0.2916667 0.7083333
+  stop-RDOC-052.txt      0.3333333 0.6666667
+  stop-RDOC-054.txt      0.3750000 0.6250000
+  stop-RDOC-055.txt      0.3333333 0.6666667
+  stop-RDOC-057.txt      0.4166667 0.5833333
+  stop-RDOC-059.txt      0.4166667 0.5833333
+  stop-RDOC-060.txt      0.2500000 0.7500000
+  stop-RDOC-061.txt      0.3333333 0.6666667
+  stop-RDOC-062.txt      0.2500000 0.7500000
+  stop-RDOC-063.txt      0.3333333 0.6666667
+  stop-RDOC-064.txt      0.5000000 0.5000000
+  stop-RDOC-065.txt      0.3750000 0.6250000
+  stop-RDOC-067.txt      0.6666667 0.3333333
+  stop-RDOC-069.txt      0.2083333 0.7916667
+  stop-RDOC-070.txt      0.4583333 0.5416667
+  stop-RDOC-072.txt      0.3333333 0.6666667
+  stop-RDOC-073.txt      0.3750000 0.6250000
+  stop-RDOC-074.txt      0.2083333 0.7916667
+  stop-RDOC-075.txt      0.3750000 0.6250000
+  stop-RDOC-076.txt      0.4166667 0.5833333
+  stop-RDOC-077.txt      0.3750000 0.6250000
+  stop-RDOC-078.txt      0.3333333 0.6666667
+  stop-RDOC-079.txt      0.4583333 0.5416667
+  stop-RDOC-080.txt      0.4166667 0.5833333
+  stop-RDOC-081.txt      0.3750000 0.6250000
+  stop-RDOC-084.txt      0.4166667 0.5833333
+  stop-RDOC-085.txt      0.5000000 0.5000000
+  stop-RDOC066.txt       0.5000000 0.5000000
+> 
+> # exclude subjects if needed
+> # COULD CREATE EXCLUSION CRITERIA RULE HERE
+> subject_excl <- c("stop-RDOC-029.txt") # removing 29 because something funky is happening here
+> input <- subset (input, subject %nin% subject_excl)
+> input$subject <- factor(input$subject)
+> 
+> # --- STEP:  analyse no-signal data ---
+> # subset data
+> nosignal.input <- subset(input, signal == 'nosignal')
+> 
+> # create molten object 
+> nosignal.molten <- melt(nosignal.input, id.var = c('subject', 'correct', 'presp'), measure.var = c('acc', 'miss', 'rt1'))
+> 
+> # calculate percent correct
+> # Accuracy of p(correct) = correct trials / (correct trials + incorrect trials).
+> # Trials without a response (or anticpatory responses) are omitted. 
+> acc.cast <- cast (nosignal.molten, subject ~ ., mean, subset = variable == "acc" &  presp == "1") 
+> names(acc.cast)[2] <- "acc"
+> acc.cast
+                  subject       acc
+1       stop-RDOC-001.txt 1.0000000
+2       stop-RDOC-002.txt 0.9333333
+3  stop-RDOC-003-RUN2.txt 0.9137931
+4       stop-RDOC-003.txt 0.9682540
+5       stop-RDOC-004.txt 0.9692308
+6       stop-RDOC-005.txt 0.9428571
+7       stop-RDOC-006.txt 0.9393939
+8       stop-RDOC-008.txt 0.9577465
+9       stop-RDOC-009.txt 0.8611111
+10      stop-RDOC-010.txt 0.9861111
+11      stop-RDOC-011.txt 0.9558824
+12      stop-RDOC-013.txt 0.9714286
+13      stop-RDOC-014.txt 0.9718310
+14      stop-RDOC-015.txt 0.9305556
+15      stop-RDOC-017.txt 0.9692308
+16      stop-RDOC-018.txt 0.5671642
+17      stop-RDOC-019.txt 0.9855072
+18      stop-RDOC-020.txt 0.8750000
+19      stop-RDOC-021.txt 0.8307692
+20      stop-RDOC-022.txt 0.9420290
+21      stop-RDOC-023.txt 0.9047619
+22      stop-RDOC-024.txt 1.0000000
+23      stop-RDOC-025.txt 0.9318182
+24      stop-RDOC-026.txt 0.7625000
+25      stop-RDOC-027.txt 0.8787879
+26      stop-RDOC-028.txt 0.9583333
+27      stop-RDOC-031.txt 0.9104478
+28      stop-RDOC-032.txt 0.7586207
+29      stop-RDOC-034.txt 0.9718310
+30      stop-RDOC-035.txt 0.9565217
+31      stop-RDOC-036.txt 0.8870968
+32      stop-RDOC-038.txt 0.8750000
+33      stop-RDOC-040.txt 0.6349206
+34      stop-RDOC-042.txt 1.0000000
+35      stop-RDOC-044.txt 0.8923077
+36      stop-RDOC-045.txt 0.9855072
+37      stop-RDOC-046.txt 0.9583333
+38      stop-RDOC-047.txt 0.9861111
+39      stop-RDOC-049.txt 0.9705882
+40      stop-RDOC-052.txt 0.9565217
+41      stop-RDOC-054.txt 0.9859155
+42      stop-RDOC-055.txt 0.9344262
+43      stop-RDOC-057.txt 1.0000000
+44      stop-RDOC-059.txt 0.8769231
+45      stop-RDOC-060.txt 0.9722222
+46      stop-RDOC-061.txt 0.9855072
+47      stop-RDOC-062.txt 0.9420290
+48      stop-RDOC-063.txt 0.9242424
+49      stop-RDOC-064.txt 0.9305556
+50      stop-RDOC-065.txt 0.9558824
+51      stop-RDOC-067.txt 0.8461538
+52      stop-RDOC-069.txt 0.9855072
+53      stop-RDOC-070.txt 0.5510204
+54      stop-RDOC-072.txt 0.9722222
+55      stop-RDOC-073.txt 0.9855072
+56      stop-RDOC-074.txt 0.9411765
+57      stop-RDOC-075.txt 0.9722222
+58      stop-RDOC-076.txt 0.8970588
+59      stop-RDOC-077.txt 1.0000000
+60      stop-RDOC-078.txt 0.9857143
+61      stop-RDOC-079.txt 0.9859155
+62      stop-RDOC-080.txt 0.8833333
+63      stop-RDOC-081.txt 0.9718310
+64      stop-RDOC-084.txt 0.9722222
+65      stop-RDOC-085.txt 0.8000000
+66       stop-RDOC066.txt 0.9855072
+> summaryBy(acc ~ 1, data=as.data.frame(acc.cast),  FUN=c(mean,sd))
+   acc.mean     acc.sd
+1 0.9226414 0.09271982
+> 
+> # calculate p(miss)
+> miss.cast <- cast (nosignal.molten, subject ~ ., mean, subset = variable == "miss") 
+> names(miss.cast)[2] <- "miss"
+> miss.cast
+                  subject       miss
+1       stop-RDOC-001.txt 0.04166667
+2       stop-RDOC-002.txt 0.16666667
+3  stop-RDOC-003-RUN2.txt 0.23684211
+4       stop-RDOC-003.txt 0.12500000
+5       stop-RDOC-004.txt 0.09722222
+6       stop-RDOC-005.txt 0.02777778
+7       stop-RDOC-006.txt 0.08333333
+8       stop-RDOC-008.txt 0.01388889
+9       stop-RDOC-009.txt 0.00000000
+10      stop-RDOC-010.txt 0.00000000
+11      stop-RDOC-011.txt 0.05555556
+12      stop-RDOC-013.txt 0.02777778
+13      stop-RDOC-014.txt 0.01388889
+14      stop-RDOC-015.txt 0.00000000
+15      stop-RDOC-017.txt 0.09722222
+16      stop-RDOC-018.txt 0.06944444
+17      stop-RDOC-019.txt 0.04166667
+18      stop-RDOC-020.txt 0.00000000
+19      stop-RDOC-021.txt 0.09722222
+20      stop-RDOC-022.txt 0.04166667
+21      stop-RDOC-023.txt 0.12500000
+22      stop-RDOC-024.txt 0.02777778
+23      stop-RDOC-025.txt 0.38888889
+24      stop-RDOC-026.txt 0.05882353
+25      stop-RDOC-027.txt 0.08333333
+26      stop-RDOC-028.txt 0.00000000
+27      stop-RDOC-031.txt 0.06944444
+28      stop-RDOC-032.txt 0.19444444
+29      stop-RDOC-034.txt 0.01388889
+30      stop-RDOC-035.txt 0.04166667
+31      stop-RDOC-036.txt 0.13888889
+32      stop-RDOC-038.txt 0.00000000
+33      stop-RDOC-040.txt 0.12500000
+34      stop-RDOC-042.txt 0.00000000
+35      stop-RDOC-044.txt 0.09722222
+36      stop-RDOC-045.txt 0.04166667
+37      stop-RDOC-046.txt 0.00000000
+38      stop-RDOC-047.txt 0.00000000
+39      stop-RDOC-049.txt 0.05555556
+40      stop-RDOC-052.txt 0.04166667
+41      stop-RDOC-054.txt 0.01388889
+42      stop-RDOC-055.txt 0.15277778
+43      stop-RDOC-057.txt 0.00000000
+44      stop-RDOC-059.txt 0.09722222
+45      stop-RDOC-060.txt 0.00000000
+46      stop-RDOC-061.txt 0.04166667
+47      stop-RDOC-062.txt 0.04166667
+48      stop-RDOC-063.txt 0.08333333
+49      stop-RDOC-064.txt 0.00000000
+50      stop-RDOC-065.txt 0.05555556
+51      stop-RDOC-067.txt 0.09722222
+52      stop-RDOC-069.txt 0.04166667
+53      stop-RDOC-070.txt 0.31944444
+54      stop-RDOC-072.txt 0.00000000
+55      stop-RDOC-073.txt 0.04166667
+56      stop-RDOC-074.txt 0.05555556
+57      stop-RDOC-075.txt 0.00000000
+58      stop-RDOC-076.txt 0.05555556
+59      stop-RDOC-077.txt 0.00000000
+60      stop-RDOC-078.txt 0.02777778
+61      stop-RDOC-079.txt 0.01388889
+62      stop-RDOC-080.txt 0.16666667
+63      stop-RDOC-081.txt 0.01388889
+64      stop-RDOC-084.txt 0.00000000
+65      stop-RDOC-085.txt 0.02777778
+66       stop-RDOC066.txt 0.04166667
+> summaryBy(miss ~ 1, data=as.data.frame(miss.cast),  FUN=c(mean,sd))
+   miss.mean    miss.sd
+1 0.06256059 0.07484626
+> 
+> # calculate RT for correct responses
+> rt.cast <- cast (nosignal.molten,  subject ~ ., mean, subset = variable == "rt1" &  correct == "4") 
+> names(rt.cast)[2] <- "rt"
+> rt.cast
+                  subject        rt
+1       stop-RDOC-001.txt  957.0149
+2       stop-RDOC-002.txt  897.1255
+3  stop-RDOC-003-RUN2.txt  679.6042
+4       stop-RDOC-003.txt  920.6133
+5       stop-RDOC-004.txt  734.9523
+6       stop-RDOC-005.txt  769.7542
+7       stop-RDOC-006.txt 1029.0121
+8       stop-RDOC-008.txt  765.6501
+9       stop-RDOC-009.txt  538.8313
+10      stop-RDOC-010.txt  571.7432
+11      stop-RDOC-011.txt  786.1102
+12      stop-RDOC-013.txt  661.3426
+13      stop-RDOC-014.txt  968.5664
+14      stop-RDOC-015.txt  657.4603
+15      stop-RDOC-017.txt  875.4544
+16      stop-RDOC-018.txt  569.2411
+17      stop-RDOC-019.txt  965.8545
+18      stop-RDOC-020.txt  786.1226
+19      stop-RDOC-021.txt  950.0426
+20      stop-RDOC-022.txt  667.2682
+21      stop-RDOC-023.txt 1043.9601
+22      stop-RDOC-024.txt  785.1818
+23      stop-RDOC-025.txt  857.8602
+24      stop-RDOC-026.txt  935.4402
+25      stop-RDOC-027.txt  720.0558
+26      stop-RDOC-028.txt  656.8293
+27      stop-RDOC-031.txt 1006.0755
+28      stop-RDOC-032.txt  997.0485
+29      stop-RDOC-034.txt  748.7543
+30      stop-RDOC-035.txt  926.7897
+31      stop-RDOC-036.txt  873.1506
+32      stop-RDOC-038.txt  633.7359
+33      stop-RDOC-040.txt  718.9995
+34      stop-RDOC-042.txt  821.4051
+35      stop-RDOC-044.txt 1117.9236
+36      stop-RDOC-045.txt  911.0884
+37      stop-RDOC-046.txt  503.6746
+38      stop-RDOC-047.txt  552.3534
+39      stop-RDOC-049.txt  944.7749
+40      stop-RDOC-052.txt  827.8019
+41      stop-RDOC-054.txt  763.9222
+42      stop-RDOC-055.txt  853.9810
+43      stop-RDOC-057.txt  622.5146
+44      stop-RDOC-059.txt  832.7774
+45      stop-RDOC-060.txt  993.4078
+46      stop-RDOC-061.txt  852.3159
+47      stop-RDOC-062.txt  833.7928
+48      stop-RDOC-063.txt  951.3930
+49      stop-RDOC-064.txt  502.9903
+50      stop-RDOC-065.txt  800.7977
+51      stop-RDOC-067.txt  795.8761
+52      stop-RDOC-069.txt 1005.0093
+53      stop-RDOC-070.txt  388.9160
+54      stop-RDOC-072.txt  869.0434
+55      stop-RDOC-073.txt  711.2621
+56      stop-RDOC-074.txt 1064.7304
+57      stop-RDOC-075.txt  777.8650
+58      stop-RDOC-076.txt  935.0710
+59      stop-RDOC-077.txt  887.7098
+60      stop-RDOC-078.txt  895.2513
+61      stop-RDOC-079.txt  673.0764
+62      stop-RDOC-080.txt  724.5337
+63      stop-RDOC-081.txt  518.2513
+64      stop-RDOC-084.txt  591.9833
+65      stop-RDOC-085.txt  639.9437
+66       stop-RDOC066.txt  713.2157
+> summaryBy(rt ~ 1, data=as.data.frame(rt.cast),  FUN=c(mean,sd))
+   rt.mean    rt.sd
+1 795.9742 160.0366
+> 
+> # --- STEP:  analyse stop-signal data ---
+> 
+> #function to calculate all signal data at once...
+> funcSignal <- function(data){
++   # signal data: prespond & ssd
++   signal <- subset(data, signal == 'signal')
++   presp <-  mean(signal$presp)
++   ssd <- mean(signal$trueSOA)
++   
++   # nth RT & mean go RT
++   nosignal <- subset(data, signal == 'nosignal' & resp1 > 0)
++   nthRT <- quantile(nosignal$rt1, probs = presp, type = 6) 
++   goRT <- mean(nosignal$rt1)
++   
++   # SSRT = nthRT - ssd
++   ssrt <- nthRT - ssd
++   
++   # signal-respond RT
++   responded <- subset(signal, presp == 1)
++   sRT <- mean(responded$rt1)
++   raceTest <- goRT - sRT
++     
++   # Return
++   return(data.frame(presp = presp, ssd = ssd, nthRT = nthRT, ssrt = ssrt, 
++                     sRT = sRT, raceTest = raceTest))
++ }
+> 
+> signal.cast <- ddply(input, .(subject), funcSignal)
+> signal.cast
+                  subject     presp       ssd     nthRT       ssrt          sRT
+1       stop-RDOC-001.txt 0.2083333 612.41042  781.7518  169.34133  766.0756000
+2       stop-RDOC-002.txt 0.2916667 449.92317  767.3200  317.39679  220.9761429
+3  stop-RDOC-003-RUN2.txt 0.4230769 317.25458  574.2655  257.01092  584.2268182
+4       stop-RDOC-003.txt 0.3333333 470.75167  771.8247  301.07300  477.2662500
+5       stop-RDOC-004.txt 0.5000000 320.79575  673.2350  352.43925  599.8224167
+6       stop-RDOC-005.txt 0.4583333 470.78017  770.1843  299.40417  719.6375455
+7       stop-RDOC-006.txt 0.3750000 499.92925  938.8147  438.88550   -0.8853333
+8       stop-RDOC-008.txt 0.4583333 445.76608  758.1680  312.40192  216.6767273
+9       stop-RDOC-009.txt 0.5416667 245.81750  510.3275  264.51000  467.1574615
+10      stop-RDOC-010.txt 0.4166667 416.61504  543.3378  126.72279  484.1817000
+11      stop-RDOC-011.txt 0.2916667 445.76354  646.6703  200.90671  274.5928571
+12      stop-RDOC-013.txt 0.5000000 170.80983  625.3195  454.50967  534.5439167
+13      stop-RDOC-014.txt 0.2916667 541.58642  860.1830  318.59658  775.9784286
+14      stop-RDOC-015.txt 0.4583333 195.80229  614.3770  418.57475  -26.0339091
+15      stop-RDOC-017.txt 0.2916667 566.58775  673.5995  107.01175  248.9542857
+16      stop-RDOC-018.txt 0.6250000 112.48117  604.9045  492.42333   57.2475333
+17      stop-RDOC-019.txt 0.3333333 520.76104  850.0920  329.33096  280.8818750
+18      stop-RDOC-020.txt 0.4166667 341.61096  625.0183  283.40729  659.2497000
+19      stop-RDOC-021.txt 0.4166667 454.09671  819.2770  365.18029  136.0222000
+20      stop-RDOC-022.txt 0.4166667 320.78446  585.8372  265.05271  418.4843000
+21      stop-RDOC-023.txt 0.2916667 520.76446  866.0470  345.28254  320.0271429
+22      stop-RDOC-024.txt 0.3333333 508.27162  665.8010  157.52938  593.3173750
+23      stop-RDOC-025.txt 0.2083333 499.92638  597.7268   97.80038  656.5790000
+24      stop-RDOC-026.txt 0.3076923 463.39854  701.3745  237.97592  515.9073750
+25      stop-RDOC-027.txt 0.5000000 287.46621  641.0715  353.60529  246.4090000
+26      stop-RDOC-028.txt 0.4166667 391.61200  515.6726  124.06058  443.7298000
+27      stop-RDOC-031.txt 0.3333333 508.26246  836.6263  328.36388 -207.4412500
+28      stop-RDOC-032.txt 0.2916667 558.27183  702.4436  144.17175   26.1002857
+29      stop-RDOC-034.txt 0.3333333 449.93279  651.7920  201.85921  630.4125000
+30      stop-RDOC-035.txt 0.3750000 424.94538  785.2935  360.34812  342.4670000
+31      stop-RDOC-036.txt 0.4166667 399.95779  766.8347  366.87696  428.0729000
+32      stop-RDOC-038.txt 0.5000000 170.80383  598.2725  427.46867  433.7458333
+33      stop-RDOC-040.txt 0.5000000 316.63392  679.6490  363.01508  145.7696667
+34      stop-RDOC-042.txt 0.2916667 491.60342  736.0940  244.49054  617.0262857
+35      stop-RDOC-044.txt 0.2500000 674.90162  851.5670  176.66538  543.8738333
+36      stop-RDOC-045.txt 0.2916667 574.92062  812.0074  237.08679  617.7622857
+37      stop-RDOC-046.txt 0.4583333 233.31546  461.4025  228.08708  515.6690909
+38      stop-RDOC-047.txt 0.5000000 295.77958  512.9500  217.17042  453.5517500
+39      stop-RDOC-049.txt 0.2916667 612.41604  865.4642  253.04821  114.3095714
+40      stop-RDOC-052.txt 0.3333333 533.24992  740.7283  207.47842  697.5486250
+41      stop-RDOC-054.txt 0.3750000 495.76025  704.6340  208.87375  653.2653333
+42      stop-RDOC-055.txt 0.3333333 554.04413  723.0807  169.03654  175.8585000
+43      stop-RDOC-057.txt 0.4166667 287.42338  599.1550  311.73162  517.9683000
+44      stop-RDOC-059.txt 0.4166667 445.72812  670.7900  225.06187  683.8386000
+45      stop-RDOC-060.txt 0.2500000 537.37971  793.6740  256.29429  402.6835000
+46      stop-RDOC-061.txt 0.3333333 583.21008  723.7450  140.53492  455.0737500
+47      stop-RDOC-062.txt 0.2500000 587.38792  575.6550  -11.73292  594.5821667
+48      stop-RDOC-063.txt 0.3333333 504.09108  810.2867  306.19558   44.6661250
+49      stop-RDOC-064.txt 0.5000000 170.76358  485.0035  314.23992  441.6271667
+50      stop-RDOC-065.txt 0.3750000 537.37417  677.6082  140.23408  536.4962222
+51      stop-RDOC-067.txt 0.6666667  81.20021  864.8560  783.65579  734.3137500
+52      stop-RDOC-069.txt 0.2083333 608.22500  826.2779  218.05292  297.3710000
+53      stop-RDOC-070.txt 0.4583333 287.40767 -542.4395 -829.84717 -891.9400000
+54      stop-RDOC-072.txt 0.3333333 424.88704  805.3267  380.43962  524.6650000
+55      stop-RDOC-073.txt 0.3750000 349.89013  619.8680  269.97788  547.3740000
+56      stop-RDOC-074.txt 0.2083333 633.21221  865.7973  232.58504  869.1270000
+57      stop-RDOC-075.txt 0.3750000 458.20887  718.5199  260.31100  660.5297778
+58      stop-RDOC-076.txt 0.4166667 408.22458  807.2600  399.03542  289.2805000
+59      stop-RDOC-077.txt 0.3750000 587.37467  821.2696  233.89496  744.9787778
+60      stop-RDOC-078.txt 0.3333333 524.88813  808.3227  283.43454  623.4001250
+61      stop-RDOC-079.txt 0.4583333 366.57325  641.3820  274.80875  535.5364545
+62      stop-RDOC-080.txt 0.4166667 408.23146  635.1740  226.94254  177.0517000
+63      stop-RDOC-081.txt 0.3750000 225.61092  479.1700  253.55908  473.7661111
+64      stop-RDOC-084.txt 0.4166667 329.07658  517.5897  188.51308  498.9794000
+65      stop-RDOC-085.txt 0.5000000 266.57925  580.3770  313.79775  427.1575833
+66       stop-RDOC066.txt 0.5000000 299.91542  691.7560  391.84058  337.3254167
+      raceTest
+1   190.939313
+2   552.570824
+3   -43.789784
+4   359.870433
+5    67.255599
+6     4.355826
+7   931.914591
+8   497.388540
+9    -6.303489
+10   85.389800
+11  420.287099
+12   70.327055
+13  171.509262
+14  669.217229
+15  538.755453
+16  194.193855
+17  642.681415
+18   65.562731
+19  565.211308
+20  165.398222
+21  597.144810
+22  191.864439
+23   77.779045
+24  264.976188
+25  396.611545
+26  174.487061
+27 1063.476489
+28  467.491387
+29  113.932585
+30  542.406464
+31  245.426745
+32  147.525181
+33  366.060921
+34  204.378784
+35  324.907167
+36  257.355830
+37  -20.372396
+38   96.512486
+39  754.900179
+40   70.894607
+41   85.611300
+42  568.279533
+43  104.546339
+44  -40.723892
+45  564.082139
+46  369.547380
+47  168.074877
+48  837.740708
+49   29.832736
+50  217.288440
+51   73.578373
+52  675.822696
+53  659.777000
+54  344.137694
+55  145.973957
+56   89.614662
+57  113.214097
+58  534.973103
+59  142.731000
+60  233.476604
+61  122.175236
+62  525.062267
+63   44.779255
+64    1.513392
+65  -38.289469
+66  370.947279
+>  
+> # combine all data and write to csv file
+> combined <- signal.cast
+> combined$acc.ns <- acc.cast$acc
+> combined$miss.ns <- miss.cast$miss
+> combined$rt.ns <- rt.cast$rt
+> write.csv(combined, 'results.csv', row.names = F)
+> write.csv(signal.cast, file = "SSRT.csv")
+> save.image("allData.RData")
+> 
