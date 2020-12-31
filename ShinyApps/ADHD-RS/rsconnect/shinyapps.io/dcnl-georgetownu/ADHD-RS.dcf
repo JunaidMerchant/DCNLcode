@@ -1,0 +1,12 @@
+name: ADHD-RS
+title: ADHD-RS
+username:
+account: dcnl-georgetownu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 274899
+bundleId: 2045701
+url: https://dcnl-georgetownu.shinyapps.io/ADHD-RS/
+when: 1556504308.30213
+asMultiple: FALSE
+asStatic: FALSE

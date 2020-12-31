@@ -1,0 +1,13 @@
+name: rdoc-svm
+title:
+username:
+account: dcnl-georgetownu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 260636
+bundleId: 1629872
+url: https://dcnl-georgetownu.shinyapps.io/rdoc-svm/
+when: 1539016475.29343
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app_notworking.R|app_working_old.R|datafiles/RDOC_clustering_results_etc.csv|datafiles/svm_splihalf_final.rda

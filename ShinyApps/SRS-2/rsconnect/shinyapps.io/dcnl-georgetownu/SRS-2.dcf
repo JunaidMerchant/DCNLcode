@@ -1,0 +1,12 @@
+name: SRS-2
+title: SRS-2
+username:
+account: dcnl-georgetownu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 340347
+bundleId: 2045739
+url: https://dcnl-georgetownu.shinyapps.io/SRS-2/
+when: 1556506027.35074
+asMultiple: FALSE
+asStatic: FALSE
