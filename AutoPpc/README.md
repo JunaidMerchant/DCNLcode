@@ -4,7 +4,7 @@ AutoPpc is a fully automated, end-to-end data processing pipeline for task, rest
 
 ### While this was very useful for the RDoC project at the time, I recommend using more standardized tools from BIDS/BIDS Apps ecosystem for anyone wanting to accomplish a similar objective. 
 
-Nonetheless, if you find this usefull, here are descriptions for each of the functions:
+#### Nonetheless, if you find this usefull, here are descriptions for each of the functions:
 
 BetFunc.sh  - Skull-strips the functional files. Takes as input 1) subject ppc directory 2) name of functional run
 
@@ -50,13 +50,13 @@ OrganizeFunc.sh - Organizes the functional data into preprocessing folder. Takes
 
 OrganizeStruct.sh - Organizes and skull strips the structural data into the preprocessing folder. Takes as input: SubID, subject ppc folder, and name of structural
 
-#### Parameters.sh - VERY IMPORTANT parameters file, where you change parameters, paths, study ID etc to make the AutoPpc pipeline work for the specific study
+##### Parameters.sh - VERY IMPORTANT parameters file, where you change parameters, paths, study ID etc to make the AutoPpc pipeline work for the specific study
 
 pm_defaults_jsm.m - SPM parameters file for converting fieldmap scans to voxel displacement maps. Consult this link to figure out what to edit: https://lcni.uoregon.edu/kb-articles/kb-0003
 
 Ppc1SpmBatch.sh - Bash script that launches matlab/spm and creates and runs first part of ppc for functional data , takes as input: SpmDir, SubID, SubP, CodeDir, PpcBatchDir, functional run name,fieldmap name
 
-#### Ppc1Sub.sh - VERY IMPORTANT wrapper script that runs the appropriate scripts in order to create the pipeline. Can be modified to fit the study.
+##### Ppc1Sub.sh - VERY IMPORTANT wrapper script that runs the appropriate scripts in order to create the pipeline. Can be modified to fit the study.
 
 Ppc2SpmBatch.sh - Bash script that launches matlab/spm and creates and runs second part of ppc for functional data , takes as input: SpmDir, SubID, SubP, CodeDir, PpcBatchDir, functional run name, structural scan name
 
